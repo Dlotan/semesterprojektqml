@@ -21,6 +21,27 @@ ApplicationWindow {
             }
         }
     }
+
+    Database {
+        id: database
+        Component.onCompleted: {
+            database.onError.connect(showError);
+            database.onProgress.connect(fillTable.onProgress);
+        }
+        function showError(errorMsg) {
+            errorDialog.text = errorMsg;
+            fillTable.hide();
+            errorDialog.open();
+        }
+    }
+
+    MessageDialog {
+        id: errorDialog
+        title: "ERROR"
+        text: ""
+        onAccepted: close()
+    }
+
     RowLayout{
         anchors.fill: parent
         ColumnLayout {
@@ -45,7 +66,7 @@ ApplicationWindow {
             }
             Button {
                 id: valueAddButton
-                text: "Add"
+                text: "Fill"
                 onClicked: {
                     fillTable.reset()
                     fillTable.show();
@@ -185,14 +206,15 @@ ApplicationWindow {
     }
 
     Component.onCompleted: {
-        newTable.send.connect(createTable)
-        fillTable.send.connect(fillTableFunc)
+        newTable.send.connect(createTable);
+        fillTable.send.connect(fillTableFunc);
+        database.onFillFinished.connect(fillTable.hide);
+        database.onFillFinished.connect(tableView.refresh);
     }
 
     function fillTableFunc(quantity, initialClasses) {
         var tableName = tableView.model.getName(tableView.currentRow);
         database.fillTable(tableName, quantity, initialClasses);
-        tableView.refresh();
     }
 
     ProfileWindow {

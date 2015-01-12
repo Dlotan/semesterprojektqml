@@ -7,6 +7,7 @@
 #include "generator/generator.h"
 #include "generator/generatorcosine.h"
 #include "generator/generatorcauchy.h"
+#include "generator/generatorweibull.h"
 #include <math.h>
 
 DiceMaster::DiceMaster()
@@ -92,7 +93,7 @@ QList<RandomRangeClass> DiceMaster::getRandomRangeClasses(const QList<double>& n
     double currentMin = min;
     QVector<double> copyNumbers(numbers.size());
     qCopy(numbers.begin(), numbers.end(), copyNumbers.begin());
-    qSort(copyNumbers);
+    std::sort(copyNumbers.begin(), copyNumbers.end());
     QList<RandomRangeClass> randomRangeClasses;
     int currentIndex = 0;
     while (currentMin < max)
@@ -142,6 +143,8 @@ QList<double> DiceMaster::getTestedList(std::unique_ptr<Generator>& generator, i
 {
     QList<double> result;
     QList<RandomRangeClass> randomRangeClasses;
+    const int maxIterations = 100;
+    int i = 0;
     do {
         result.clear();
         for(int i = 0; i < quantity; i++)
@@ -149,7 +152,12 @@ QList<double> DiceMaster::getTestedList(std::unique_ptr<Generator>& generator, i
             result << generator->getNumber();
         }
         randomRangeClasses = getRandomRangeClasses(result, initialClasses);
-    }while(!checkChiSquare(generator, randomRangeClasses));
+        i++;
+    }while(!checkChiSquare(generator, randomRangeClasses) && i < maxIterations);
+    if(i == maxIterations)
+    {
+        return QList<double>();
+    }
     return result;
 }
 
@@ -164,7 +172,15 @@ QList<int> DiceMaster::getRandomNumbers(QString generatorName, int quantity, int
     {
         generator = std::unique_ptr<Generator>(static_cast<Generator*>(new GeneratorCauchy()));
     }
+    else if(generatorName == "weibull")
+    {
+        generator = std::unique_ptr<Generator>(static_cast<Generator*>(new GeneratorWeibull()));
+    }
     QList<double> resultDoubleList = getTestedList(generator, quantity, initialClasses);
+    if(resultDoubleList.size() == 0)
+    {
+        return QList<int>();
+    }
     Q_ASSERT(resultDoubleList.size() == quantity);
     return transformList(resultDoubleList);
 }

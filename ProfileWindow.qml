@@ -4,8 +4,8 @@ import jbQuick.Charts 1.0
 import QtQuick.Layouts 1.1
 
 ApplicationWindow {
-    width: 600
-    height: 600
+    width: 700
+    height: 500
     visible: false
     property var colors: [
         {
@@ -33,7 +33,9 @@ ApplicationWindow {
             rgb: "rgba(255,0,255"
         }
     ]
+    property var valuesCopy: null
     function initialize(values) {
+        valuesCopy = values;
         chart.chart = null;
         var labels = [];
         for(var name in values)
@@ -50,7 +52,6 @@ ApplicationWindow {
         repeaterModel.clear();
         for(name in values)
         {
-            console.log(colors[i].rgb.concat(",0.2)"));
             var dataset = {};
             dataset['label'] = name;
             dataset['fillColor'] = colors[i].rgb.concat(",0.2)");
@@ -70,6 +71,7 @@ ApplicationWindow {
             var temp = {};
             temp['name'] = name;
             temp['colorName'] = colors[i].colorName;
+            temp['values'] = data;
             repeaterModel.append(temp);
             i++;
         }
@@ -79,33 +81,54 @@ ApplicationWindow {
         }
         chart.repaint();
     }
-    ColumnLayout {
-        Chart {
-            id: chart;
-            width: 600
-            height: 400;
-            chartType: Charts.ChartType.LINE;
-            chartOptions: {}
-            property int aufloesung: 20
-            Component.onCompleted: {
+    ListModel {
+        id: repeaterModel
+    }
+    RowLayout {
+        RowLayout {
+            anchors.top: parent.top
+            Repeater {
+                model: repeaterModel
+                Column {
+                    spacing: 4
+                    Text {
+                        width: 120
+                        text: "Name: " + name + " "
+                    }
+                    Repeater {
+                        model: valuesCopy[name].length
+                        Text {
+                            text: valuesCopy[name][index]
+                        }
+                    }
+                }
             }
         }
-        Repeater {
-            id: repeater
-            model: ListModel {
-                id: repeaterModel
+        ColumnLayout {
+            Chart {
+                id: chart;
+                width: 600
+                height: 400;
+                chartType: Charts.ChartType.LINE;
+                chartOptions: {}
+                property int aufloesung: 20
+                Component.onCompleted: {
+                }
             }
+            Repeater {
+                id: repeater
+                model: repeaterModel
+                Row {
+                    spacing: 5
+                    Text {
+                        text: "█"
+                        color: colorName
+                    }
+                    Text {
+                        text: "Name: " + name
+                    }
 
-            Row {
-                spacing: units.gu(1)
-                Text {
-                    text: "█"
-                    color: colorName
                 }
-                Text {
-                    text: "Name: " + name
-                }
-
             }
         }
     }

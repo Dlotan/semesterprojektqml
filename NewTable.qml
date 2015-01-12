@@ -39,6 +39,7 @@ ApplicationWindow {
             id: distributionComboBoxItems
             ListElement {text: "cauchy"}
             ListElement {text: "cosine"}
+            ListElement {text: "weibull"}
             ListElement {text: "normal"}
             ListElement {text: "logNormal"}
         }

@@ -5,6 +5,8 @@
 #include "../dicemaster.h"
 #include <algorithm>
 #include <QElapsedTimer>
+#include <QThread>
+#include "insertthread.h"
 
 /*
  * id table_name own_distribution own_count virus_distribution virus_count status
@@ -73,7 +75,7 @@ void Database::resetDatabase()
     query.exec("DROP TABLE dist_tables");
 }
 
-void Database::fillTable(QString tableName, int quantity, int initialClasses)
+bool Database::fillTable(QString tableName, int quantity, int initialClasses)
 {
     query.prepare("SELECT own_distribution FROM dist_tables WHERE table_name = :table_name");
     query.bindValue(":table_name", tableName);
@@ -85,35 +87,19 @@ void Database::fillTable(QString tableName, int quantity, int initialClasses)
     {
         QString distribution = query.value(0).toString();
         QList<int> numbers = DiceMaster::getRandomNumbers(distribution, quantity, initialClasses);
-        qDebug() << numbers.size();
-        QSqlQuery query2(permDatabaseConnection);
-        for(auto number : numbers)
+        if(numbers.size() == 0)
         {
-            query2.prepare(QString("INSERT INTO ") + tableName + " values (:number)");
-            query2.bindValue(":number", number);
-            if(!query2.exec())
-            {
-                qDebug() << query2.lastError().text();
-            }
+            emit onError("Initial classes make chi square fail");
+            return false;
         }
-    }
-    if(!query.exec("SELECT COUNT(*) FROM " + tableName))
-    {
-        qDebug() << query.lastError().text();
-    }
-    while(query.next())
-    {
-        int count = query.value(0).toInt();
         QSqlQuery query2(permDatabaseConnection);
-        QString queryText = QString("UPDATE dist_tables SET own_count = ")
-            + QString::number(count) + " WHERE table_name = :table_name";
-        query2.prepare(queryText);
-        query2.bindValue(":table_name", tableName);
-        if(!query2.exec())
-        {
-            qDebug() << query.lastError().text();
-        }
+        InsertThread* insertThread = new InsertThread(query2, tableName, numbers, this);
+        connect(insertThread, &InsertThread::onProgress, [=](int progress){emit onProgress(progress);});
+        connect(insertThread, &InsertThread::finished, [=](){emit onFillFinished();});
+        connect(insertThread, &InsertThread::finished, insertThread, &QObject::deleteLater);
+        insertThread->start();
     }
+    return true;
 }
 
 QVariantList Database::getNumbers(QString tableName)
@@ -208,7 +194,7 @@ QVariantList Database::profileTable(QString tableName)
     {
         sortedNumbers << number.toInt();
     }
-    qSort(sortedNumbers.begin(), sortedNumbers.end());
+    std::sort(sortedNumbers.begin(), sortedNumbers.end());
     QList<int> searchFor;
     const int min = sortedNumbers.first();
     const int max = sortedNumbers.last();

@@ -15,7 +15,7 @@ public:
     Q_INVOKABLE void createTable(QString tableName, QString distribution);
     Q_INVOKABLE void deleteTable(QString tableName);
     Q_INVOKABLE void resetDatabase();
-    Q_INVOKABLE void fillTable(QString tableName, int quantity, int initialClasses);
+    Q_INVOKABLE bool fillTable(QString tableName, int quantity, int initialClasses);
     Q_INVOKABLE QVariantList getNumbers(QString tableName);
     int profileQuery(QString queryString);
     int closest(const QList<int>& numbers, int search);
@@ -24,6 +24,9 @@ public:
     ~Database();
 
 signals:
+    void onError(QString);
+    void onProgress(int);
+    void onFillFinished();
 
 public slots:
 

@@ -21,3 +21,5 @@ include(deployment.pri)
 HEADERS += \
     dicemaster.h \
     randomrangeclass.h
+
+DISTFILES +=
