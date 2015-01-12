@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>NewTable.qml</file>
+        <file>FillTable.qml</file>
+        <file>ProfileWindow.qml</file>
+    </qresource>
+</RCC>
