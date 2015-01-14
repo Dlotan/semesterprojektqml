@@ -5,9 +5,13 @@ ApplicationWindow {
     id: newTable
     width: 250
     height: 150
-    signal send(string tableName, string distribution)
+    signal send(string tableName, string distribution, bool hasIndex)
     function reset() {
+        indexCheckBox.checked = true;
         nameTextfield.text = "";
+    }
+    Settings {
+        id: settings
     }
 
     Text {
@@ -19,7 +23,7 @@ ApplicationWindow {
     Text {
         id: text1
         x: 20
-        y: 77
+        y: 61
         text: qsTr("Distribution")
         font.pixelSize: 12
     }
@@ -34,27 +38,37 @@ ApplicationWindow {
     ComboBox {
         id: distributionComboBox
         x: 118
-        y: 77
-        model: ListModel {
-            id: distributionComboBoxItems
-            ListElement {text: "cauchy"}
-            ListElement {text: "cosine"}
-            ListElement {text: "weibull"}
-            ListElement {text: "normal"}
-            ListElement {text: "logNormal"}
-        }
+        y: 61
+        model: settings.distributionModel
+    }
+
+    Text {
+        id: text2
+        x: 20
+        y: 94
+        text: qsTr("Inedex")
+        font.pixelSize: 12
+    }
+
+    CheckBox {
+        id: indexCheckBox
+        x: 157
+        y: 94
+        text: qsTr("")
+        checked: true
     }
 
     Button {
         id: newTableButton
         x: 87
-        y: 114
+        y: 121
         text: qsTr("New Table")
         onClicked: {
-            var comboBoxText = distributionComboBoxItems.get(distributionComboBox.currentIndex).text
-            newTable.send(nameTextfield.text, comboBoxText);
+            var comboBoxText = settings.distributionModel.get(distributionComboBox.currentIndex).text
+            newTable.send(nameTextfield.text, comboBoxText, indexCheckBox.checked);
             newTable.hide()
         }
     }
+
 }
 

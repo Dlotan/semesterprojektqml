@@ -1,5 +1,5 @@
 #include "generatorcosine.h"
-#include <math.h>
+#include "math.h"
 #include <QtGlobal>
 
 GeneratorCosine::GeneratorCosine()

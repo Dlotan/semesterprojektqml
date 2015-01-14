@@ -12,7 +12,7 @@ class Database : public QObject
     Q_OBJECT
 public:
     explicit Database(QObject *parent = 0);
-    Q_INVOKABLE void createTable(QString tableName, QString distribution);
+    Q_INVOKABLE void createTable(QString tableName, QString distribution, bool hasIndex);
     Q_INVOKABLE void deleteTable(QString tableName);
     Q_INVOKABLE void resetDatabase();
     Q_INVOKABLE bool fillTable(QString tableName, int quantity, int initialClasses);
@@ -21,6 +21,7 @@ public:
     int closest(const QList<int>& numbers, int search);
     QVariantList profileTable(QString tableName);
     Q_INVOKABLE QVariantMap profile();
+    Q_INVOKABLE bool virusInsert(QString tableName, QString virusDistribution, int quantity, int initialClasses);
     ~Database();
 
 signals:

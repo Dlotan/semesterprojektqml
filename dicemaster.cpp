@@ -8,6 +8,12 @@
 #include "generator/generatorcosine.h"
 #include "generator/generatorcauchy.h"
 #include "generator/generatorweibull.h"
+#include "generator/generatornormal.h"
+#include "generator/generatorlognormal.h"
+#include "generator/generatorparabolic.h"
+#include "generator/generatorextremevalue.h"
+#include "generator/generatorexponential.h"
+#include "generator/generatordoublelog.h"
 #include <math.h>
 
 DiceMaster::DiceMaster()
@@ -20,38 +26,42 @@ DiceMaster::~DiceMaster()
 
 }
 
-double DiceMaster::collectionMin(const QList<double>& numbers)
-{
-    double min = numbers.first();
-    for(auto number : numbers)
-    {
-        min = qMin(number, min);
-    }
-    return min;
-}
-
-double DiceMaster::collectionMax(const QList<double>& numbers)
-{
-    double max = numbers.first();
-    for(auto number : numbers)
-    {
-        max = qMax(number, max);
-    }
-    return max;
-}
-
-QList<int> DiceMaster::transformList(const QList<double>& numbers)
+QList<int> DiceMaster::scaleListUp(const QList<double>& numbers)
 {
     QList<int> result;
-    double max = collectionMax(numbers);
-    double min = collectionMin(numbers);
+    double max = *std::max_element(numbers.begin(), numbers.end());
+    double min = *std::min_element(numbers.begin(), numbers.end());
     max -= min;
     double multiplier = 100000000 / max;
-    for(auto number: numbers)
+    for(auto number : numbers)
     {
         result << (number - min) * multiplier;
     }
     return result;
+}
+
+// http://stackoverflow.com/questions/5294955/how-to-scale-down-a-range-of-numbers-with-a-known-min-and-max-value
+QList<double> DiceMaster::scaleListDownDouble(const QList<double> &numbers, double min, double max)
+{
+    double maxElement = *std::max_element(numbers.begin(), numbers.end());
+    double minElement = *std::min_element(numbers.begin(), numbers.end());
+    QList<double> result;
+    auto scaleFunc = [=](double x){return ((max - min) * (x - minElement)) / (maxElement - minElement) + min;};
+    for(auto number : numbers)
+    {
+        result << scaleFunc(number);
+    }
+    return result;
+}
+
+QList<double> DiceMaster::scaleListDownInt(const QList<int> &numbers, double min, double max)
+{
+    QList<double> doubleNumbers;
+    for(auto number : numbers)
+    {
+        doubleNumbers << number;
+    }
+    return scaleListDownDouble(doubleNumbers, min, max);
 }
 
 bool DiceMaster::checkChiSquare(std::unique_ptr<Generator>& generator, QList<RandomRangeClass>& randomRangeClasses)
@@ -85,14 +95,14 @@ bool DiceMaster::checkChiSquare(std::unique_ptr<Generator>& generator, QList<Ran
 QList<RandomRangeClass> DiceMaster::getRandomRangeClasses(const QList<double>& numbers, int initialClasses)
 {
     QList<RandomRangeClass> result;
-    double max = collectionMax(numbers);
-    double min = collectionMin(numbers);
+    double max = *std::max_element(numbers.begin(), numbers.end());
+    double min = *std::min_element(numbers.begin(), numbers.end());
     qDebug() << "min" << min;
     qDebug() << "max" << max;
     double range = (max - min) / initialClasses;
     double currentMin = min;
     QVector<double> copyNumbers(numbers.size());
-    qCopy(numbers.begin(), numbers.end(), copyNumbers.begin());
+    std::copy(numbers.begin(), numbers.end(), copyNumbers.begin());
     std::sort(copyNumbers.begin(), copyNumbers.end());
     QList<RandomRangeClass> randomRangeClasses;
     int currentIndex = 0;
@@ -161,7 +171,7 @@ QList<double> DiceMaster::getTestedList(std::unique_ptr<Generator>& generator, i
     return result;
 }
 
-QList<int> DiceMaster::getRandomNumbers(QString generatorName, int quantity, int initialClasses)
+std::unique_ptr<Generator> DiceMaster::getGeneratorFromName(QString generatorName)
 {
     std::unique_ptr<Generator> generator;
     if(generatorName == "cosine")
@@ -176,12 +186,46 @@ QList<int> DiceMaster::getRandomNumbers(QString generatorName, int quantity, int
     {
         generator = std::unique_ptr<Generator>(static_cast<Generator*>(new GeneratorWeibull()));
     }
+    else if(generatorName == "normal")
+    {
+        generator = std::unique_ptr<Generator>(static_cast<Generator*>(new GeneratorNormal()));
+    }
+    else if(generatorName == "logNormal")
+    {
+        generator = std::unique_ptr<Generator>(static_cast<Generator*>(new GeneratorLognormal()));
+    }
+    else if(generatorName == "parabolic")
+    {
+        generator = std::unique_ptr<Generator>(static_cast<Generator*>(new GeneratorParabolic()));
+    }
+    else if(generatorName == "extremeValue")
+    {
+        generator = std::unique_ptr<Generator>(static_cast<Generator*>(new GeneratorExtremeValue()));
+    }
+    else if(generatorName == "exponential")
+    {
+        generator = std::unique_ptr<Generator>(static_cast<Generator*>(new GeneratorExponential()));
+    }
+    else if(generatorName == "doubleLog")
+    {
+        generator = std::unique_ptr<Generator>(static_cast<Generator*>(new GeneratorDoubleLog()));
+    }
+    else
+    {
+        Q_ASSERT(false);
+    }
+    return generator;
+}
+
+QList<double> DiceMaster::getRandomNumbers(QString generatorName, int quantity, int initialClasses)
+{
+    std::unique_ptr<Generator> generator = getGeneratorFromName(generatorName);
     QList<double> resultDoubleList = getTestedList(generator, quantity, initialClasses);
     if(resultDoubleList.size() == 0)
     {
-        return QList<int>();
+        return QList<double>();
     }
     Q_ASSERT(resultDoubleList.size() == quantity);
-    return transformList(resultDoubleList);
+    return resultDoubleList;
 }
 

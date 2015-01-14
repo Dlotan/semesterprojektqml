@@ -8,6 +8,8 @@
 #include "dicemaster.h"
 #include <QDebug>
 
+#include "generator/generatornormal.h"
+
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
@@ -19,7 +21,5 @@ int main(int argc, char *argv[])
     qmlRegisterType<Database>("custom", 1, 0, "Database");
     qmlRegisterType<SqlQueryModel>("custom", 1, 0, "SqlQueryModel");
     engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
-
-    // DiceMaster::getRandomNumbers("cauchy", 10000, 100000);
     return app.exec();
 }

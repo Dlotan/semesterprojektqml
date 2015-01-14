@@ -3,25 +3,29 @@
 #include <QVariant>
 #include <QDebug>
 #include <QSqlError>
+#include "dicemaster.h"
 
-InsertThread::InsertThread(QSqlQuery &query, QString tableName, QList<int> &numbers, QObject* parent)
-    : QThread(parent)
+InsertThread::InsertThread(QSqlQuery &query, QString tableName, QList<double> &numbers, QObject* parent)
+    : QThread(parent),
+      query(query),
+      numbers(numbers)
 {
-    this->query = query;
     this->tableName = tableName;
-    this->numbers = numbers;
 }
 
 void InsertThread::run()
 {
     int i = 1;
-    for(auto number : numbers)
+    double min = *std::min_element(numbers.begin(), numbers.end());
+    double max = *std::max_element(numbers.begin(), numbers.end());
+    QList<int> scaledNumbers = DiceMaster::scaleListUp(numbers);
+    for(auto number : scaledNumbers)
     {
-        if(i % (numbers.size() / 100) == 0)
+        if(i % (scaledNumbers.size() / 100) == 0)
         {
-            emit onProgress((i * 1.0) / numbers.size() * 100);
+            emit onProgress((i * 1.0) / scaledNumbers.size() * 100);
         }
-        query.prepare(QString("INSERT INTO ") + tableName + " values (:number)");
+        query.prepare(QString("INSERT INTO ") + tableName + " (value) values (:number)");
         query.bindValue(":number", number);
         if(!query.exec())
         {
@@ -39,7 +43,8 @@ void InsertThread::run()
         count = query.value(0).toInt();
     }
     QString queryText = QString("UPDATE dist_tables SET own_count = ")
-        + QString::number(count) + " WHERE table_name = :table_name";
+        + QString::number(count) + ", min = " + QString::number(min) + ", max = "
+        + QString::number(max) + " WHERE table_name = :table_name";
     query.prepare(queryText);
     query.bindValue(":table_name", tableName);
     if(!query.exec())

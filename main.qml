@@ -26,11 +26,11 @@ ApplicationWindow {
         id: database
         Component.onCompleted: {
             database.onError.connect(showError);
-            database.onProgress.connect(fillTable.onProgress);
         }
         function showError(errorMsg) {
             errorDialog.text = errorMsg;
             fillTable.hide();
+            virusTable.hide();
             errorDialog.open();
         }
     }
@@ -93,6 +93,16 @@ ApplicationWindow {
                 }
 
             }
+            Button {
+                id: virusButton
+                x: 17
+                y: 125
+                text: "Insert Virus"
+                onClicked: {
+                    virusTable.reset();
+                    virusTable.show();
+                }
+            }
         }
 
         TableView {
@@ -109,10 +119,13 @@ ApplicationWindow {
             TableViewColumn{ role: "id"  ; title: "ID" ; width: 30 }
             TableViewColumn{ role: "table_name"  ; title: "Name" ; width: 60 }
             TableViewColumn{ role: "own_distribution" ; title: "Own distribution" ; width: 80 }
-            TableViewColumn{ role: "own_count" ; title: "Own count" ; width: 80 }
+            TableViewColumn{ role: "own_count" ; title: "Own count" ; width: 60 }
             TableViewColumn{ role: "virus_distribution" ; title: "Virus distribution" ; width: 80 }
-            TableViewColumn{ role: "virus_count" ; title: "Virus count" ; width: 80 }
+            TableViewColumn{ role: "virus_count" ; title: "Virus count" ; width: 60 }
             TableViewColumn{ role: "status" ; title: "Status" ; width: 60 }
+            TableViewColumn{ role: "has_index" ; title: "Index" ; width: 60 }
+            TableViewColumn{ role: "min" ; title: "Min" ; width: 60 }
+            TableViewColumn{ role: "max" ; title: "Max" ; width: 60 }
         }
 
         Chart {
@@ -190,26 +203,41 @@ ApplicationWindow {
         }
     }
 
+    Component.onCompleted: {
+        newTable.send.connect(createTable);
+        fillTable.send.connect(fillTableFunc);
+        database.onProgress.connect(fillTable.onProgress);
+        database.onProgress.connect(virusTable.onProgress);
+        database.onFillFinished.connect(fillTable.hide);
+        database.onFillFinished.connect(virusTable.hide);
+        database.onFillFinished.connect(tableView.refresh);
+        virusTable.send.connect(virusTablefunc);
+    }
+
     NewTable {
         id: newTable
         visible: false
     }
-    function createTable(tableName, distribution)
-    {
-        database.createTable(tableName, distribution);
+
+    function createTable(tableName, distribution, hasIndex) {
+        database.createTable(tableName, distribution, hasIndex);
         tableView.refresh();
+    }
+
+    VirusTable {
+        id: virusTable
+        visible: false
+    }
+
+    function virusTablefunc(distribution, quantity, initialClasses) {
+        var tableName = tableView.model.getName(tableView.currentRow);
+        database.virusInsert(tableName, distribution, quantity, initialClasses);
+        tableView.refresh()
     }
 
     FillTable {
         id: fillTable
         visible: false
-    }
-
-    Component.onCompleted: {
-        newTable.send.connect(createTable);
-        fillTable.send.connect(fillTableFunc);
-        database.onFillFinished.connect(fillTable.hide);
-        database.onFillFinished.connect(tableView.refresh);
     }
 
     function fillTableFunc(quantity, initialClasses) {
@@ -220,4 +248,6 @@ ApplicationWindow {
     ProfileWindow {
         id: profileWindow
     }
+
+
 }

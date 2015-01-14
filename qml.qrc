@@ -4,5 +4,7 @@
         <file>NewTable.qml</file>
         <file>FillTable.qml</file>
         <file>ProfileWindow.qml</file>
+        <file>Settings.qml</file>
+        <file>VirusTable.qml</file>
     </qresource>
 </RCC>

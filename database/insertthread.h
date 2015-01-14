@@ -11,7 +11,7 @@ class InsertThread : public QThread
 {
     Q_OBJECT
 public:
-    InsertThread(QSqlQuery& query, QString tableName, QList<int>& numbers, QObject *parent = nullptr);
+    InsertThread(QSqlQuery& query, QString tableName, QList<double>& numbers, QObject *parent = nullptr);
     void run() override;
     ~InsertThread();
 signals:
@@ -19,7 +19,7 @@ signals:
 private:
     QSqlQuery query;
     QString tableName;
-    QList<int> numbers;
+    QList<double> numbers;
 };
 
 #endif // INSERTTHREAD_H
