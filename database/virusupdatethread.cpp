@@ -1,27 +1,27 @@
-#include "virusinsertthread.h"
+#include "virusupdatethread.h"
 #include <QSqlQuery>
 #include <QVariant>
 #include <QSqlError>
 #include "dicemaster.h"
 #include <QDebug>
 
-VirusInsertThread::VirusInsertThread(QSqlQuery &query, QString tableName,
-    QList<double> &before, QList<double> &after, QObject* parent)
+VirusUpdateThread::VirusUpdateThread(QSqlQuery &query, QString tableName,
+    QList<double> &before, QList<double> &update, QObject* parent)
     : QThread(parent),
       tableName(tableName),
       query(query),
       before(before),
-      after(after)
+      update(update)
 {
 }
 
-VirusInsertThread::~VirusInsertThread()
+VirusUpdateThread::~VirusUpdateThread()
 {
 }
 
-void VirusInsertThread::run()
+void VirusUpdateThread::run()
 {
-    QList<double> allNumbersTogether = before + after;
+    QList<double> allNumbersTogether = before + update;
     int i = 1;
     double min = *std::min_element(allNumbersTogether.begin(), allNumbersTogether.end());
     double max = *std::max_element(allNumbersTogether.begin(), allNumbersTogether.end());
@@ -43,14 +43,14 @@ void VirusInsertThread::run()
         i++;
     }
 
-    // Delete stage.
+    // Read stage.
     int j = 1;
-    for(int i = 0; i < scaledBefore.length(); i += scaledBefore.size() / after.size())
+    QList<int> ids;
+    for(int i = 0; i < scaledBefore.length(); i += scaledBefore.size() / update.size())
     {
         int number = scaledBefore[i];
-        emit onProgress(j / after.size() * 100);
+        emit onProgress(j / (update.size() * 1.0) * 100);
         query.prepare(QString("SELECT id FROM ") + tableName + " WHERE value=" + QString::number(number));
-        query.bindValue(":number", number);
         if(!query.exec())
         {
             qDebug() << query.lastQuery();
@@ -60,27 +60,31 @@ void VirusInsertThread::run()
         {
             Q_ASSERT(false);
         }
-        int id = query.value(0).toInt();
-        query.prepare("DELETE FROM " + tableName + " WHERE id=:id");
-        query.bindValue(":id", id);
-        if(!query.exec())
-        {
-            qDebug() << query.lastError().text();
-        }
+        ids << query.value(0).toInt();
         j++;
     }
 
-    // Virus insert.
+    // Virus update.
     i = 1;
-    QList<int> scaledAfter = DiceMaster::scaleListUp(after);
-    for(auto number : scaledAfter)
+    QList<QPair<int, int>> idToScaled;
+    QList<int> scaledUpdate = DiceMaster::scaleListUp(update);
+    auto a = ids.begin();
+    auto b = scaledUpdate.begin();
+    for(; a != ids.end() && b != scaledUpdate.end(); a++, b++)
     {
-        if(i % (scaledAfter.size() / 100) == 0)
+        idToScaled << qMakePair(*a, *b);
+    }
+    qDebug() << "size" << idToScaled.size();
+    for(auto idScaled : idToScaled)
+    {
+        if(i % (idToScaled.size() / 100) == 0)
         {
-            emit onProgress((i * 1.0) / scaledAfter.size() * 100);
+            emit onProgress((i * 1.0) / idToScaled.size() * 100);
         }
-        query.prepare(QString("INSERT INTO ") + tableName + " (value) values (:number)");
-        query.bindValue(":number", number);
+        qDebug() << "value" << idScaled.second;
+        qDebug() << "id" << idScaled.first;
+        query.prepare(QString("UPDATE ") + tableName + " set value = " + QString::number(idScaled.second)
+                      + " WHERE id = " + QString::number(idScaled.first));
         if(!query.exec())
         {
             qDebug() << query.lastError().text();
@@ -98,8 +102,8 @@ void VirusInsertThread::run()
         count = query.value(0).toInt();
     }
     QString queryText = QString("UPDATE dist_tables SET own_count = ")
-        + QString::number(count - after.size()) + ", virus_count = "
-        + QString::number(after.size()) + ", min = " + QString::number(min) + ", max = "
+        + QString::number(count - update.size()) + ", virus_count = "
+        + QString::number(update.size()) + ", min = " + QString::number(min) + ", max = "
         + QString::number(max) + ", status = :status WHERE table_name = :table_name";
     query.prepare(queryText);
     query.bindValue(":status", "vinsert");
@@ -109,4 +113,3 @@ void VirusInsertThread::run()
         qDebug() << query.lastError().text();
     }
 }
-

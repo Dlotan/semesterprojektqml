@@ -22,6 +22,7 @@ public:
     QVariantList profileTable(QString tableName);
     Q_INVOKABLE QVariantMap profile();
     Q_INVOKABLE bool virusInsert(QString tableName, QString virusDistribution, int quantity, int initialClasses);
+    Q_INVOKABLE bool virusUpdate(QString tableName, QString virusDistribution, int quantity, int initialClasses);
     ~Database();
 
 signals:

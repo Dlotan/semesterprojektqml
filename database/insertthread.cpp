@@ -4,6 +4,7 @@
 #include <QDebug>
 #include <QSqlError>
 #include "dicemaster.h"
+#include <QVariantList>
 
 InsertThread::InsertThread(QSqlQuery &query, QString tableName, QList<double> &numbers, QObject* parent)
     : QThread(parent),

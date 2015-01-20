@@ -83,6 +83,11 @@ ApplicationWindow {
             }
 
             Button {
+                id: profileRangeButton
+                text: qsTr("Profile Range")
+            }
+
+            Button {
                 id: deleteButton
                 x: 8
                 y: 106
@@ -94,10 +99,10 @@ ApplicationWindow {
 
             }
             Button {
-                id: virusButton
+                id: virusInsertButton
                 x: 17
                 y: 125
-                text: "Insert Virus"
+                text: "Parasite"
                 onClicked: {
                     virusTable.reset();
                     virusTable.show();
@@ -229,9 +234,16 @@ ApplicationWindow {
         visible: false
     }
 
-    function virusTablefunc(distribution, quantity, initialClasses) {
+    function virusTablefunc(distribution, quantity, initialClasses, insert) {
         var tableName = tableView.model.getName(tableView.currentRow);
-        database.virusInsert(tableName, distribution, quantity, initialClasses);
+        if(insert)
+        {
+            database.virusInsert(tableName, distribution, quantity, initialClasses);
+        }
+        else
+        {
+            database.virusUpdate(tableName, distribution, quantity, initialClasses);
+        }
         tableView.refresh()
     }
 
