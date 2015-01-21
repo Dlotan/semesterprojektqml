@@ -228,9 +228,9 @@ int Database::closest(const QList<int> &numbers, int search)
     return oldNumber;
 }
 
-QVariantList Database::profileTable(QString tableName)
+QVariantList Database::profileTableSingle(QString tableName)
 {
-    qDebug() << "profile" << tableName;
+    qDebug() << "profile single" << tableName;
     QVariantList averages;
     QVariantList numbers = getNumbers(tableName);
     QList<int> sortedNumbers;
@@ -293,7 +293,53 @@ QVariantList Database::profileTable(QString tableName)
     return averages;
 }
 
-QVariantMap Database::profile()
+QVariantList Database::profileTableRange(QString tableName)
+{
+    qDebug() << "profile range" << tableName;
+    QVariantList averages;
+    QVariantList numbers = getNumbers(tableName);
+    QList<int> sortedNumbers;
+    for(auto number : numbers)
+    {
+        sortedNumbers << number.toInt();
+    }
+    std::sort(sortedNumbers.begin(), sortedNumbers.end());
+    QList<QPair<int,int>> searchFor;
+    const int min = sortedNumbers.first();
+    const int max = sortedNumbers.last();
+    const int midRange = (max - min) / 2;
+    const int midElement = sortedNumbers[sortedNumbers.length() / 2];
+    searchFor << qMakePair(min, max);
+    searchFor << qMakePair(min, min);
+    searchFor << qMakePair(min, midRange);
+    searchFor << qMakePair(midRange, max);
+    searchFor << qMakePair(min, midElement);
+    int i = midElement + 1;
+    int j = sortedNumbers[sortedNumbers.length() / 2 + 1];;
+    while(std::binary_search(sortedNumbers.begin(), sortedNumbers.end(), i))
+    {
+        i++;
+    }
+    while(std::binary_search(sortedNumbers.begin(), sortedNumbers.end(), j))
+    {
+        j--;
+    }
+    searchFor << qMakePair(i, j);
+    QList<QList<int>> resultLists;
+    for(auto number : searchFor)
+    {
+        resultLists << profileQuery("SELECT value FROM " + tableName + " WHERE value BETWEEN  "
+                                    + QString::number(number.first) + " and " + QString::number(number.second));
+    }
+    std::for_each(resultLists.begin(), resultLists.end(),
+                  [&](QList<int> n){averages << static_cast<int>(DiceMaster::getAverage(n));});
+    QVector<double> stdDeviations(averages.size());
+    std::transform(resultLists.begin(), resultLists.end(), stdDeviations.begin(), DiceMaster::getStdDeviation);
+    FileManager::write(tableName, averages, stdDeviations);
+    return averages;
+}
+
+QVariantMap Database::profile(bool range)
 {
     QVariantMap result;
     if(!query.exec("SELECT table_name, own_count, virus_count FROM dist_tables"))
@@ -311,7 +357,14 @@ QVariantMap Database::profile()
     }
     for(auto table : tables)
     {
-        result[table] = profileTable(table);
+        if(range)
+        {
+            result[table] = profileTableRange(table);
+        }
+        else
+        {
+            result[table] = profileTableSingle(table);
+        }
     }
     return result;
 }

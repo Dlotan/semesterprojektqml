@@ -76,7 +76,7 @@ ApplicationWindow {
                 id: profileButton
                 text: "Profile"
                 onClicked: {
-                    var result = database.profile();
+                    var result = database.profile(false);
                     profileWindow.initialize(result);
                     profileWindow.show();
                 }
@@ -85,6 +85,11 @@ ApplicationWindow {
             Button {
                 id: profileRangeButton
                 text: qsTr("Profile Range")
+                onClicked: {
+                    var result = database.profile(true);
+                    profileWindow.initialize(result);
+                    profileWindow.show();
+                }
             }
 
             Button {

@@ -19,8 +19,9 @@ public:
     Q_INVOKABLE QVariantList getNumbers(QString tableName);
     QList<int> profileQuery(QString queryString);
     int closest(const QList<int>& numbers, int search);
-    QVariantList profileTable(QString tableName);
-    Q_INVOKABLE QVariantMap profile();
+    QVariantList profileTableSingle(QString tableName);
+    QVariantList profileTableRange(QString tableName);
+    Q_INVOKABLE QVariantMap profile(bool range);
     Q_INVOKABLE bool virusInsert(QString tableName, QString virusDistribution, int quantity, int initialClasses);
     Q_INVOKABLE bool virusUpdate(QString tableName, QString virusDistribution, int quantity, int initialClasses);
     ~Database();
