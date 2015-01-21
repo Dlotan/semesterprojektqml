@@ -25,8 +25,6 @@ void FileManager::initialize()
         return;
     }
     outStream.setDevice(file);
-    outStream << "blub";
-    outStream.flush();
 }
 
 void FileManager::write(QString tableName, QVariantList averages, QVector<double> stdDeviations)

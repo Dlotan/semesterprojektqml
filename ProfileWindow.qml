@@ -56,10 +56,6 @@ ApplicationWindow {
             dataset['label'] = name;
             dataset['fillColor'] = colors[i].rgb.concat(",0.2)");
             dataset['strokeColor'] = colors[i].rgb.concat(",1)");
-            dataset['pointColor'] = colors[i].rgb.concat(",1)");
-            dataset['pointStrokeColor'] = "#fff";
-            dataset['pointHighlightFill'] = "#fff";
-            dataset['pointHighlightStroke'] = colors[i].rgb.concat(",1)");
             var data = [];
             for(var j = 0; j < values[name].length; j++)
             {
@@ -109,7 +105,7 @@ ApplicationWindow {
                 id: chart;
                 width: 600
                 height: 400;
-                chartType: Charts.ChartType.LINE;
+                chartType: Charts.ChartType.BAR;
                 chartOptions: {}
                 property int aufloesung: 20
                 Component.onCompleted: {
