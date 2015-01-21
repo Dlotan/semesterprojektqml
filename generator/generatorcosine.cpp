@@ -2,6 +2,8 @@
 #include "math.h"
 #include <QtGlobal>
 
+#define _USE_MATH_DEFINES
+
 GeneratorCosine::GeneratorCosine()
 {
 }
