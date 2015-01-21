@@ -1,6 +1,10 @@
 #ifndef GENERATOR_H
 #define GENERATOR_H
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 
 class Generator
 {
