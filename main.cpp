@@ -6,6 +6,7 @@
 #include <database/sqlquerymodel.h>
 
 #include "dicemaster.h"
+#include "filemanager.h"
 #include <QDebug>
 
 #include "generator/generatornormal.h"
@@ -13,7 +14,7 @@
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-
+    FileManager::initialize();
     QQmlApplicationEngine engine;
     //engine.addImportPath(QLatin1String("/Users/f14r/workspaces/qt/semesterprojektqml/qml");
     qDebug() << engine.importPathList();

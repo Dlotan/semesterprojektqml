@@ -17,7 +17,7 @@ public:
     Q_INVOKABLE void resetDatabase();
     Q_INVOKABLE bool fillTable(QString tableName, int quantity, int initialClasses);
     Q_INVOKABLE QVariantList getNumbers(QString tableName);
-    int profileQuery(QString queryString);
+    QList<int> profileQuery(QString queryString);
     int closest(const QList<int>& numbers, int search);
     QVariantList profileTable(QString tableName);
     Q_INVOKABLE QVariantMap profile();

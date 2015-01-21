@@ -15,6 +15,7 @@
 #include "generator/generatorexponential.h"
 #include "generator/generatordoublelog.h"
 #include <math.h>
+#include <numeric>
 
 DiceMaster::DiceMaster()
 {
@@ -214,6 +215,7 @@ std::unique_ptr<Generator> DiceMaster::getGeneratorFromName(QString generatorNam
     {
         Q_ASSERT(false);
     }
+    // Return move
     return generator;
 }
 
@@ -227,5 +229,21 @@ QList<double> DiceMaster::getRandomNumbers(QString generatorName, int quantity, 
     }
     Q_ASSERT(resultDoubleList.size() == quantity);
     return resultDoubleList;
+}
+
+double DiceMaster::getAverage(QList<int> numbers)
+{
+    return std::accumulate(numbers.begin(), numbers.end(), 0) / numbers.size();
+}
+
+// http://stackoverflow.com/questions/7616511/calculate-mean-and-standard-deviation-from-a-vector-of-samples-in-c-using-boos
+double DiceMaster::getStdDeviation(QList<int> numbers)
+{
+    std::vector<double> diff(numbers.size());
+    std::transform(numbers.begin(), numbers.end(), diff.begin(),
+                   std::bind2nd(std::minus<double>(), getAverage(numbers)));
+    double sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
+    double stdev = sqrt(sq_sum / numbers.size());
+    return stdev;
 }
 

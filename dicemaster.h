@@ -19,6 +19,9 @@ public:
     static QList<double> getTestedList(std::unique_ptr<Generator>& generator, int quantity, int initialClasses);
     static std::unique_ptr<Generator> getGeneratorFromName(QString generatorName);
     static QList<double> getRandomNumbers(QString generatorName, int quantity, int initialClasses);
+
+    static double getAverage(QList<int> numbers);
+    static double getStdDeviation(QList<int> numbers);
 };
 
 #endif // DICEMASTER_H

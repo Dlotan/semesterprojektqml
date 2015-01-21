@@ -11,6 +11,7 @@
 #include "virusupdatethread.h"
 #include "../generator/generator.h"
 #include "../randomrangeclass.h"
+#include "../filemanager.h"
 
 /*
  * id table_name own_distribution own_count virus_distribution virus_count status
@@ -160,9 +161,9 @@ QVariantList Database::getNumbers(QString tableName)
     return result;
 }
 
-int Database::profileQuery(QString queryString)
+QList<int> Database::profileQuery(QString queryString)
 {
-    const int warmup = 100;
+    const int warmup = 10;
     const int iterations = 1000;
     // Warmup.
     for(int i = 0; i < warmup; ++i)
@@ -207,12 +208,7 @@ int Database::profileQuery(QString queryString)
         delete tempConnection;
         QSqlDatabase::removeDatabase("temp");
     }
-    int sum = 0;
-    for(auto result : results)
-    {
-        sum += result;
-    }
-    return sum / results.size();
+    return results;
 }
 
 int Database::closest(const QList<int> &numbers, int search)
@@ -235,7 +231,7 @@ int Database::closest(const QList<int> &numbers, int search)
 QVariantList Database::profileTable(QString tableName)
 {
     qDebug() << "profile" << tableName;
-    QVariantList result;
+    QVariantList averages;
     QVariantList numbers = getNumbers(tableName);
     QList<int> sortedNumbers;
     for(auto number : numbers)
@@ -284,11 +280,17 @@ QVariantList Database::profileTable(QString tableName)
     // Mid range 7.
     searchFor << *std::lower_bound(sortedNumbers.begin(), sortedNumbers.end(), closest(sortedNumbers, midRange));
     i = min + 1;
+    QList<QList<int>> resultLists;
     for(auto number : searchFor)
     {
-        result << profileQuery("SELECT value FROM " + tableName + " WHERE value = " + QString::number(number));
+        resultLists << profileQuery("SELECT value FROM " + tableName + " WHERE value = " + QString::number(number));
     }
-    return result;
+    std::for_each(resultLists.begin(), resultLists.end(),
+                  [&](QList<int> n){averages << static_cast<int>(DiceMaster::getAverage(n));});
+    QVector<double> stdDeviations(averages.size());
+    std::transform(resultLists.begin(), resultLists.end(), stdDeviations.begin(), DiceMaster::getStdDeviation);
+    FileManager::write(tableName, averages, stdDeviations);
+    return averages;
 }
 
 QVariantMap Database::profile()

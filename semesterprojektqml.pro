@@ -5,7 +5,8 @@ QT += sql
 CONFIG += c++11
 SOURCES += main.cpp \
     dicemaster.cpp \
-    randomrangeclass.cpp
+    randomrangeclass.cpp \
+    filemanager.cpp
 
 RESOURCES += qml.qrc
 
@@ -20,6 +21,7 @@ include(deployment.pri)
 
 HEADERS += \
     dicemaster.h \
-    randomrangeclass.h
+    randomrangeclass.h \
+    filemanager.h
 
 DISTFILES +=

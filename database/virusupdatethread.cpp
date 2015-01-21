@@ -74,15 +74,12 @@ void VirusUpdateThread::run()
     {
         idToScaled << qMakePair(*a, *b);
     }
-    qDebug() << "size" << idToScaled.size();
     for(auto idScaled : idToScaled)
     {
         if(i % (idToScaled.size() / 100) == 0)
         {
             emit onProgress((i * 1.0) / idToScaled.size() * 100);
         }
-        qDebug() << "value" << idScaled.second;
-        qDebug() << "id" << idScaled.first;
         query.prepare(QString("UPDATE ") + tableName + " set value = " + QString::number(idScaled.second)
                       + " WHERE id = " + QString::number(idScaled.first));
         if(!query.exec())
