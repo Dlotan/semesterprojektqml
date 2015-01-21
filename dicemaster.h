@@ -2,6 +2,7 @@
 #define DICEMASTER_H
 
 #include <QList>
+#include <memory>
 #include "randomrangeclass.h"
 #include "generator/generator.h"
 
