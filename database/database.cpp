@@ -26,6 +26,10 @@ Database::Database(QObject *parent) : QObject(parent)
         qDebug() << "cant open db";
     }
     query = QSqlQuery(permDatabaseConnection);
+    if(!query.exec("PRAGMA page_size = 65536"))
+    {
+        qDebug() << query.lastError().text();
+    }
     query.prepare(QString("CREATE TABLE IF NOT EXISTS dist_tables(id INTEGER PRIMARY KEY ASC AUTOINCREMENT,")
         + "table_name TEXT, own_distribution TEXT, own_count INTEGER DEFAULT 0,"
         + "virus_distribution TEXT, virus_count INTEGER DEFAULT 0, status TEXT,"
@@ -164,7 +168,7 @@ QVariantList Database::getNumbers(QString tableName)
 QList<int> Database::profileQuery(QString queryString)
 {
     const int warmup = 10;
-    const int iterations = 1000;
+    const int iterations = 10000;
     // Warmup.
     for(int i = 0; i < warmup; ++i)
     {
@@ -198,8 +202,9 @@ QList<int> Database::profileQuery(QString queryString)
             qDebug() << tempQuery.lastError().text();
         }
         QElapsedTimer timer;
+        tempQuery.prepare(queryString);
         timer.start();
-        if(!tempQuery.exec(queryString))
+        if(!tempQuery.exec())
         {
             qDebug() << tempQuery.lastError().text();
         }
@@ -208,6 +213,9 @@ QList<int> Database::profileQuery(QString queryString)
         delete tempConnection;
         QSqlDatabase::removeDatabase("temp");
     }
+    std::sort(results.begin(), results.end());
+    // Remove the last 10 percent
+    results.erase(results.end() - iterations/2, results.end());
     return results;
 }
 
@@ -248,9 +256,9 @@ QVariantList Database::profileTableSingle(QString tableName)
     {
         i++;
     }
-    // Miss min 1.
+    // Miss min 0.
     searchFor << i;
-    // Min 0.
+    // Min 1.
     searchFor << min;
     i = max - 1;
     while(std::binary_search(sortedNumbers.begin(), sortedNumbers.end(), i))
@@ -283,7 +291,7 @@ QVariantList Database::profileTableSingle(QString tableName)
     QList<QList<int>> resultLists;
     for(auto number : searchFor)
     {
-        resultLists << profileQuery("SELECT value FROM " + tableName + " WHERE value = " + QString::number(number));
+        resultLists << profileQuery("SELECT SUM(value) FROM " + tableName + " WHERE value = " + QString::number(number));
     }
     std::for_each(resultLists.begin(), resultLists.end(),
                   [&](QList<int> n){averages << static_cast<int>(DiceMaster::getAverage(n));});
@@ -328,7 +336,7 @@ QVariantList Database::profileTableRange(QString tableName)
     QList<QList<int>> resultLists;
     for(auto number : searchFor)
     {
-        resultLists << profileQuery("SELECT value FROM " + tableName + " WHERE value BETWEEN  "
+        resultLists << profileQuery("SELECT SUM(value) FROM " + tableName + " WHERE value BETWEEN  "
                                     + QString::number(number.first) + " and " + QString::number(number.second));
     }
     std::for_each(resultLists.begin(), resultLists.end(),
