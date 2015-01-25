@@ -15,6 +15,7 @@ public:
     Q_INVOKABLE void createTable(QString tableName, QString distribution, bool hasIndex);
     Q_INVOKABLE void deleteTable(QString tableName);
     Q_INVOKABLE void resetDatabase();
+    Q_INVOKABLE void list();
     Q_INVOKABLE bool fillTable(QString tableName, int quantity, int initialClasses);
     Q_INVOKABLE QVariantList getNumbers(QString tableName);
     QList<int> profileQuery(QString queryString);

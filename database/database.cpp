@@ -100,6 +100,47 @@ void Database::resetDatabase()
     query.exec("DROP TABLE dist_tables");
 }
 
+void Database::list()
+{
+    QString titelLine = "Name                |status              |count     |parasitec ";
+    qDebug() << titelLine;
+    QString line = "";
+    for(int i = 0; i < titelLine.length(); ++i)
+    {
+        line += "-";
+    }
+    qDebug() << line;
+    if(!query.exec("SELECT table_name, status, own_count, virus_count FROM dist_tables"))
+    {
+        qDebug() << query.lastError().text();
+    }
+    while(query.next())
+    {
+        QString name = query.value(0).toString();
+        for(int i = name.length(); i < 20; i++)
+        {
+            name += " ";
+        }
+        QString status = query.value(1).toString();
+        for(int i = status.length(); i < 20; i++)
+        {
+            status += " ";
+        }
+        QString count = QString::number(query.value(2).toInt());
+        for(int i = count.length(); i < 10; i++)
+        {
+            count += " ";
+        }
+        QString parasiteCount = QString::number(query.value(3).toInt());
+        for(int i = parasiteCount.length(); i < 10; i++)
+        {
+            parasiteCount += " ";
+        }
+        qDebug() << name + "|" + status + "|" + count + "|" + parasiteCount;
+        qDebug() << line;
+    }
+}
+
 bool Database::fillTable(QString tableName, int quantity, int initialClasses)
 {
     query.prepare("SELECT own_distribution, status, min, max, has_index FROM dist_tables WHERE table_name = :table_name");
@@ -168,7 +209,8 @@ QVariantList Database::getNumbers(QString tableName)
 QList<int> Database::profileQuery(QString queryString)
 {
     const int warmup = 10;
-    const int iterations = 10000;
+    const int iterations = 1000;
+    double quantil = 15;
     // Warmup.
     for(int i = 0; i < warmup; ++i)
     {
@@ -214,8 +256,13 @@ QList<int> Database::profileQuery(QString queryString)
         QSqlDatabase::removeDatabase("temp");
     }
     std::sort(results.begin(), results.end());
-    // Remove the last 10 percent
-    results.erase(results.end() - iterations/2, results.end());
+    int min = *results.begin();
+    int max = *(results.end() - 1);
+    int boarder = min + ((max - min) * ((100-quantil)/100.0));
+    for(auto iter = results.end() - 1; *iter > boarder; iter--)
+    {
+        results.removeLast();
+    }
     return results;
 }
 
@@ -265,7 +312,7 @@ QVariantList Database::profileTableSingle(QString tableName)
     {
         i--;
     }
-    // Miss max 1.
+    // Miss max 2.
     searchFor << i;
     i = sortedNumbers[sortedNumbers.length() / 2];
     while(std::binary_search(sortedNumbers.begin(), sortedNumbers.end(), i))
@@ -374,6 +421,7 @@ QVariantMap Database::profile(bool range)
             result[table] = profileTableSingle(table);
         }
     }
+    qDebug() << "profiling finished";
     return result;
 }
 
